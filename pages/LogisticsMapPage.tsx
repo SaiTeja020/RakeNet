@@ -22,51 +22,53 @@ const LogisticsMapPage: FC = () => {
     }, [rakePlans]);
 
     const drawHighlightRoute = async (plan: RakeSuggestion) => {
-        const map = mapInstanceRef.current;
-        if (!map) return;
+  const map = mapInstanceRef.current;
+  if (!map) return;
 
-        const source = inventories.find(inv => inv.baseName === plan.base);
-        const destCoords = MOCK_DESTINATIONS[plan.destination];
+  const source = inventories.find(inv => inv.baseName === plan.base);
+  const destCoords = MOCK_DESTINATIONS[plan.destination];
 
-        if (!source || !destCoords) return;
+  if (!source || !destCoords) return;
 
-        if (routeLayerRef.current) {
-            map.removeLayer(routeLayerRef.current);
-        }
+  // Remove any existing route
+  if (routeLayerRef.current) {
+    map.removeLayer(routeLayerRef.current);
+  }
 
-        try {
-            const response = await fetch(
-                `https://router.project-osrm.org/route/v1/driving/${source.lon},${source.lat};${destCoords.lon},${destCoords.lat}?overview=full&geometries=geojson`
-            );
-            const data = await response.json();
+  // OSRM API with CORS-safe proxy fallback
+  const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${source.lon},${source.lat};${destCoords.lon},${destCoords.lat}?overview=full&geometries=geojson`;
+  const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(osrmUrl)}`;
 
-            if (data.routes && data.routes.length > 0) {
-                const coordinates = data.routes[0].geometry.coordinates;
-                const latlngs = coordinates.map((coord: number[]) => [coord[1], coord[0]]);
+  try {
+    const response = await fetch(proxyUrl);
+    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+    const data = await response.json();
 
-                routeLayerRef.current = L.polyline(latlngs, {
-                    color: '#FF6600',
-                    weight: 3,
-                    opacity: 0.8
-                }).addTo(map);
-            } else {
-                throw new Error('No route found');
-            }
-        } catch (error) {
-            console.warn('Failed to fetch route, using direct line:', error);
-            const latlngs = [
-                [source.lat, source.lon],
-                [destCoords.lat, destCoords.lon]
-            ];
+    if (data.routes && data.routes.length > 0) {
+      const coordinates = data.routes[0].geometry.coordinates;
+      const latlngs = coordinates.map((coord: number[]) => [coord[1], coord[0]]);
 
-            routeLayerRef.current = L.polyline(latlngs, {
-                color: '#FF6600',
-                weight: 3,
-                dashArray: '10, 10',
-                opacity: 0.8
-            }).addTo(map);
-        }
-    };
+      routeLayerRef.current = L.polyline(latlngs, {
+        color: "#FF6600",
+        weight: 3,
+        opacity: 0.8,
+      }).addTo(map);
+    } else {
+      throw new Error("No route found");
+    }
+  } catch (error) {
+    console.warn("Failed to fetch OSRM route, using direct fallback:", error);
+
+    // Fallback: straight line between source and destination
+    const latlngs = [
+      [source.lat, source.lon],
+      [destCoords.lat, destCoords.lon],
+    ];
+
+    routeLayerRef.current = L.polyline(latlngs, {
+      color: "#FF6600",
+      weight: 3,
+
 
     const removeHighlightRoute = () => {
         const map = mapInstanceRef.current;
