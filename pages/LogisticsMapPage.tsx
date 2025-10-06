@@ -68,14 +68,18 @@ const LogisticsMapPage: FC = () => {
     routeLayerRef.current = L.polyline(latlngs, {
       color: "#FF6600",
       weight: 3,
+      opacity: 0.8,
+      dashArray: "5, 10",
+    }).addTo(map);
+  }
+};
 
-
-    const removeHighlightRoute = () => {
-        const map = mapInstanceRef.current;
-        if (!map || !routeLayerRef.current) return;
-        map.removeLayer(routeLayerRef.current);
-        routeLayerRef.current = null;
-    };
+const removeHighlightRoute = () => {
+  const map = mapInstanceRef.current;
+  if (!map || !routeLayerRef.current) return;
+  map.removeLayer(routeLayerRef.current);
+  routeLayerRef.current = null;
+};
 
     useEffect(() => {
         if (!mapContainerRef.current || mapInstanceRef.current) return;

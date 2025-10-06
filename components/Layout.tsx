@@ -12,11 +12,11 @@ const Layout: FC<{ children: ReactNode }> = ({ children }) => {
   const isMapPage = location.pathname === '/map';
 
   return (
-    <div className="flex h-screen bg-light-gray dark:bg-gray-900 font-sans">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 font-sans">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header setSidebarOpen={setSidebarOpen} />
-        <main className={`flex-1 ${isMapPage ? 'overflow-hidden' : 'overflow-x-hidden overflow-y-auto bg-light-gray dark:bg-gray-900 p-6 md:p-8'}`}>
+        <main className={`flex-1 ${isMapPage ? 'overflow-hidden' : 'overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-900 p-6 md:p-8'}`}>
           {children}
         </main>
         {!isMapPage && <Footer />}
