@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 // For React 18, `createRoot` is imported from `react-dom/client`.
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import './index.css';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
