@@ -34,6 +34,13 @@ const RouteModal: FC<RouteModalProps> = ({ plan, source, onClose }) => {
   const [mapStatus, setMapStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
 
   useEffect(() => {
+    useEffect(() => {
+  const timer = setTimeout(() => {
+    // your existing map initialization code here
+  }, 200);
+
+  return () => clearTimeout(timer);
+}, [source, plan, destCoords]);
     if (!mapContainerRef.current || !destCoords || mapInstanceRef.current) {
   return;
 }
