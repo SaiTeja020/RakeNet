@@ -3,7 +3,8 @@ import { X, MapPin, Truck, Clock } from 'lucide-react';
 import { RakeSuggestion, Inventory } from '../types';
 import { MOCK_DESTINATIONS } from '../constants';
 
-declare const L: any;
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const R = 6371;
