@@ -4,6 +4,7 @@ import './dist/tailwind.css';
 import { StrictMode } from 'react';
 // For React 18, `createRoot` is imported from `react-dom/client`.
 import { createRoot } from 'react-dom/client';
+import { ThemeProvider } from './context/ThemeContext';
 import App from './App';
 
 const rootElement = document.getElementById('root');
