@@ -11,6 +11,8 @@
   --font-family-body: "Roboto", sans-serif;
 }
 
+@variant dark (&:where(.dark, .dark *));
+
 body {
   background-color: #f5f5f5;
   color: #111827;
