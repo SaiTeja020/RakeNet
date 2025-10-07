@@ -109,4 +109,4 @@ const SettingsPage: FC = () => {
             <Shield className="h-6 w-6 text-green-600 mt-1" />
             <div>
               <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-200">Security</h3>
-              <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">Manage your account's security settings.</
+              <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">Manage your account's security settings.</p>
