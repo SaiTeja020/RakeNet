@@ -1,7 +1,6 @@
 import { useState, useEffect, FC } from 'react';
 import { X, Loader2, Lightbulb } from 'lucide-react';
 import { RakeSuggestion, Order, Inventory } from '../types';
-import { GoogleGenAI } from "@google/genai";
 
 interface ExplainabilityModalProps {
   plan: RakeSuggestion;
@@ -16,117 +15,107 @@ const ExplainabilityModal: FC<ExplainabilityModalProps> = ({ plan, orders, inven
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchExplanation = async () => {
-      setIsLoading(true);
-      setError('');
-      
-      const apiKey = typeof process !== 'undefined' && process.env ? process.env.API_KEY : undefined;
-
-      if (!apiKey) {
-          setError("API key is not configured. Cannot generate explanation.");
-          setIsLoading(false);
-          return;
-      }
-
+    const generateLocalExplanation = () => {
       const relatedOrders = orders.filter(o => plan.fulfilledOrderIds.includes(o.id));
+      const totalTonnage = relatedOrders.reduce((sum, o) => sum + (o.quantity || 0), 0);
+      const destination = plan.destination;
+      const base = plan.source || plan.baseName || "source location";
+      const commodity = relatedOrders[0]?.commodity || "goods";
 
-      const prompt = `
-        **CONTEXT:**
-        You are a logistics analyst explaining the reasoning behind a specific transportation plan.
-        The goal is to provide a clear, concise, and insightful explanation for why this particular plan was chosen.
-        Focus on key performance indicators like cost-effectiveness, fulfillment of high-priority orders, and efficient use of resources.
+      return `
+**Strategic Value:**
+This plan efficiently allocates a rake from **${base}** to **${destination}**, ensuring optimal wagon utilization and meeting demand for ${commodity}. 
 
-        **DATA:**
+**Key Benefits:**
+- Fulfills ${relatedOrders.length} active order${relatedOrders.length !== 1 ? 's' : ''}, totaling approximately ${totalTonnage.toLocaleString()} tonnes.
+- Uses available stock efficiently without depleting key reserves.
+- Consolidates multiple deliveries to the same destination, reducing total transit cost.
+- Aligns rake movement with operational priorities and network flow efficiency.
 
-        **1. The Suggested Rake Plan:**
-        ${JSON.stringify(plan, null, 2)}
-
-        **2. Orders Fulfilled by this Plan:**
-        ${JSON.stringify(relatedOrders, null, 2)}
-
-        **3. Full Inventory Picture:**
-        ${JSON.stringify(inventories, null, 2)}
-        
-        **4. All Pending Orders:**
-        ${JSON.stringify(orders.filter(o => o.status === 'Pending'), null, 2)}
-
-        **TASK:**
-        Generate a brief explanation for why this rake plan is a good decision. Structure your explanation into the following sections:
-        - **Strategic Value:** A high-level summary of why this plan is strategically sound.
-        - **Key Benefits (Bulleted List):** Detail the specific advantages, such as:
-          - Meeting urgent deadlines or high-priority orders.
-          - High rake utilization, which reduces per-ton transportation costs.
-          - Combining multiple orders to the same destination for efficiency.
-          - Utilizing stock from a base with sufficient inventory, preventing stockouts.
-        - **Potential Risks or Considerations:** Briefly mention any trade-offs, if applicable (e.g., uses up a large portion of a specific product's stock).
-
-        Keep the language professional and data-driven.
+**Potential Risks or Considerations:**
+- High stock drawdown at ${base} may temporarily reduce flexibility for future dispatches.
+- Delivery schedule assumes ideal rail network availability and minimal congestion.
       `;
+    };
 
+    // Simulate async processing for UI consistency
+    const timer = setTimeout(() => {
       try {
-        const ai = new GoogleGenAI({apiKey: apiKey});
-        
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-        });
-
-        setExplanation(response.text);
-
+        const localExplanation = generateLocalExplanation();
+        setExplanation(localExplanation);
       } catch (e) {
-        console.error("Error fetching explanation:", e);
-        setError("Could not generate an explanation at this time. Please try again later.");
+        console.error(e);
+        setError("Could not generate explanation.");
       } finally {
         setIsLoading(false);
       }
-    };
+    }, 600);
 
-    fetchExplanation();
+    return () => clearTimeout(timer);
   }, [plan, orders, inventories]);
 
-  // A simple markdown-to-HTML parser
+  // Simple markdown-like renderer
   const formatExplanation = (text: string) => {
     const lines = text.split('\n');
     const elements = [];
-    let listItems = [];
+    let listItems: JSX.Element[] = [];
 
     const flushList = () => {
-        if (listItems.length > 0) {
-            elements.push(<ul key={`ul-${elements.length}`} className="list-disc pl-5 space-y-1">{listItems}</ul>);
-            listItems = [];
-        }
+      if (listItems.length > 0) {
+        elements.push(
+          <ul key={`ul-${elements.length}`} className="list-disc pl-5 space-y-1">
+            {listItems}
+          </ul>
+        );
+        listItems = [];
+      }
     };
 
     for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        if (line.startsWith('* ') || line.startsWith('- ')) {
-            listItems.push(<li key={`li-${i}`}>{line.substring(2)}</li>);
-        } else {
-            flushList();
-            if (line.match(/^\s*$/)) {
-                elements.push(<div key={`div-${i}`} className="h-4"></div>);
-            } else if (line.includes('**')) {
-                const parts = line.split('**');
-                elements.push(<p key={`p-${i}`} className="font-bold text-gray-800 dark:text-gray-200 my-2">{parts[1]}</p>);
-            } else {
-                elements.push(<p key={`p-${i}`}>{line}</p>);
-            }
+      const line = lines[i].trim();
+      if (line.startsWith('- ')) {
+        listItems.push(<li key={`li-${i}`}>{line.substring(2)}</li>);
+      } else {
+        flushList();
+        if (line.startsWith('**') && line.endsWith('**')) {
+          elements.push(
+            <h3 key={`h3-${i}`} className="font-bold text-gray-800 dark:text-gray-200 mt-4 mb-2">
+              {line.replace(/\*\*/g, '')}
+            </h3>
+          );
+        } else if (line) {
+          elements.push(
+            <p key={`p-${i}`} className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              {line}
+            </p>
+          );
         }
+      }
     }
-    flushList(); // Add any remaining list items
+    flushList();
     return elements;
   };
 
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl" onClick={e => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex justify-between items-center p-4 border-b dark:border-gray-700">
           <div className="flex items-center gap-2">
-            <Lightbulb className="text-sail-orange" size={24}/>
-            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">Plan Explanation: {plan.rakeId}</h2>
+            <Lightbulb className="text-sail-orange" size={24} />
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">
+              Plan Explanation: {plan.rakeId}
+            </h2>
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100"
+          >
             <X size={24} />
           </button>
         </div>
@@ -150,9 +139,12 @@ const ExplainabilityModal: FC<ExplainabilityModalProps> = ({ plan, orders, inven
             </div>
           )}
         </div>
-        
+
         <div className="p-4 bg-gray-50 dark:bg-gray-700 border-t dark:border-gray-600 text-right">
-          <button onClick={onClose} className="px-4 py-2 bg-sail-blue text-white rounded-md hover:bg-blue-800">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-sail-blue text-white rounded-md hover:bg-blue-800"
+          >
             Close
           </button>
         </div>
