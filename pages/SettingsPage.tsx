@@ -5,7 +5,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 
 const SettingsPage: FC = () => {
-  // const { theme, toggleTheme } = useTheme();
+  const { theme} = useTheme();
   const { user } = useAuth();
   const [toastMessage, setToastMessage] = useState('');
 
