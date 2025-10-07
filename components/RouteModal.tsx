@@ -2,10 +2,10 @@ import { useRef, useState, useEffect, FC } from 'react';
 import { X, MapPin, Truck, Clock } from 'lucide-react';
 import { RakeSuggestion, Inventory } from '../types';
 import { MOCK_DESTINATIONS } from '../constants';
-
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
+// Utility to compute great-circle distance (in km)
 const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -27,142 +27,126 @@ interface RouteModalProps {
 const RouteModal: FC<RouteModalProps> = ({ plan, source, onClose }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
+  const [mapStatus, setMapStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
+
   const destCoords = MOCK_DESTINATIONS[plan.destination];
   const distance = destCoords ? getDistance(source.lat, source.lon, destCoords.lat, destCoords.lon) : 0;
   const estimatedTime = Math.round(distance / 50);
 
-  const [mapStatus, setMapStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
-
   useEffect(() => {
-    useEffect(() => {
-  const timer = setTimeout(() => {
-    // your existing map initialization code here
-  }, 200);
+    if (!mapContainerRef.current || !destCoords || mapInstanceRef.current) return;
 
-  return () => clearTimeout(timer);
-}, [source, plan, destCoords]);
-    if (!mapContainerRef.current || !destCoords || mapInstanceRef.current) {
-  return;
-}
+    const timer = setTimeout(() => {
+      try {
+        if (typeof L === 'undefined') {
+          console.error("Leaflet failed to load.");
+          setMapStatus('error');
+          return;
+        }
 
-// ✅ Ensure Leaflet is actually loaded from the CDN
-if (typeof (window as any).L === 'undefined') {
-  console.error("Leaflet failed to load. Check if CDN script is being blocked.");
-  setMapStatus('error');
-  return;
-}
+        const origin = { lat: source.lat, lng: source.lon };
+        const destination = { lat: destCoords.lat, lng: destCoords.lon };
 
-const L = (window as any).L;
+        const map = L.map(mapContainerRef.current, {
+          center: [(origin.lat + destination.lat) / 2, (origin.lng + destination.lng) / 2],
+          zoom: 5,
+          zoomControl: true
+        });
 
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors',
+          maxZoom: 19
+        }).addTo(map);
 
-    try {
-      if (typeof L === 'undefined') {
-        setMapStatus('error');
-        return;
-      }
+        mapInstanceRef.current = map;
 
-      const origin = { lat: source.lat, lng: source.lon };
-      const destination = { lat: destCoords.lat, lng: destCoords.lon };
+        const originIcon = L.divIcon({
+          html: `<div style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: #16a34a; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+          </div>`,
+          className: '',
+          iconSize: [28, 28],
+          iconAnchor: [14, 28]
+        });
 
-      const map = L.map(mapContainerRef.current, {
-        center: [(origin.lat + destination.lat) / 2, (origin.lng + destination.lng) / 2],
-        zoom: 5,
-        zoomControl: true
-      });
+        const destIcon = L.divIcon({
+          html: `<div style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: #dc2626; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+          </div>`,
+          className: '',
+          iconSize: [28, 28],
+          iconAnchor: [14, 28]
+        });
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-        maxZoom: 19
-      }).addTo(map);
+        L.marker([origin.lat, origin.lng], { icon: originIcon })
+          .bindPopup(`<strong>${source.baseName}</strong><br/>Origin`)
+          .addTo(map);
 
-      mapInstanceRef.current = map;
+        L.marker([destination.lat, destination.lng], { icon: destIcon })
+          .bindPopup(`<strong>${plan.destination}</strong><br/>Destination`)
+          .addTo(map);
 
-      const originIcon = L.divIcon({
-        html: `<div style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: #16a34a; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
-            <circle cx="12" cy="10" r="3"/>
-          </svg>
-        </div>`,
-        className: '',
-        iconSize: [28, 28],
-        iconAnchor: [14, 28]
-      });
+        const fetchRoute = async () => {
+          try {
+            const response = await fetch(
+              `https://router.project-osrm.org/route/v1/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson`
+            );
+            const data = await response.json();
 
-      const destIcon = L.divIcon({
-        html: `<div style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: #dc2626; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
-            <circle cx="12" cy="10" r="3"/>
-          </svg>
-        </div>`,
-        className: '',
-        iconSize: [28, 28],
-        iconAnchor: [14, 28]
-      });
+            if (data.routes && data.routes.length > 0) {
+              const coordinates = data.routes[0].geometry.coordinates;
+              const latlngs = coordinates.map((coord: number[]) => [coord[1], coord[0]]);
 
-      L.marker([origin.lat, origin.lng], { icon: originIcon })
-        .bindPopup(`<strong>${source.baseName}</strong><br/>Origin`)
-        .addTo(map);
+              L.polyline(latlngs, {
+                color: '#0077B6',
+                weight: 4,
+                opacity: 0.8
+              }).addTo(map);
 
-      L.marker([destination.lat, destination.lng], { icon: destIcon })
-        .bindPopup(`<strong>${plan.destination}</strong><br/>Destination`)
-        .addTo(map);
-
-      const fetchRoute = async () => {
-        try {
-          const response = await fetch(
-            `https://router.project-osrm.org/route/v1/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson`
-          );
-          const data = await response.json();
-
-          if (data.routes && data.routes.length > 0) {
-            const coordinates = data.routes[0].geometry.coordinates;
-            const latlngs = coordinates.map((coord: number[]) => [coord[1], coord[0]]);
+              const bounds = L.latLngBounds(latlngs);
+              map.fitBounds(bounds, { padding: [50, 50] });
+            } else {
+              throw new Error('No route found');
+            }
+          } catch (error) {
+            console.warn('Failed to fetch route, using direct line:', error);
+            const latlngs = [
+              [origin.lat, origin.lng],
+              [destination.lat, destination.lng]
+            ];
 
             L.polyline(latlngs, {
               color: '#0077B6',
               weight: 4,
-              opacity: 0.8
+              dashArray: '10, 10',
+              opacity: 0.7
             }).addTo(map);
 
             const bounds = L.latLngBounds(latlngs);
             map.fitBounds(bounds, { padding: [50, 50] });
-          } else {
-            throw new Error('No route found');
           }
-        } catch (error) {
-          console.warn('Failed to fetch route, using direct line:', error);
-          const latlngs = [
-            [origin.lat, origin.lng],
-            [destination.lat, destination.lng]
-          ];
+        };
 
-          L.polyline(latlngs, {
-            color: '#0077B6',
-            weight: 4,
-            dashArray: '10, 10',
-            opacity: 0.7
-          }).addTo(map);
+        fetchRoute();
 
-          const bounds = L.latLngBounds(latlngs);
-          map.fitBounds(bounds, { padding: [50, 50] });
-        }
-      };
-
-      fetchRoute();
-
-      setTimeout(() => {
-        map.invalidateSize();
-        setMapStatus('loaded');
-      }, 100);
-
-    } catch (error) {
-      console.error("Map initialization failed:", error);
-      setMapStatus('error');
-    }
+        setTimeout(() => {
+          map.invalidateSize();
+          setMapStatus('loaded');
+        }, 100);
+      } catch (error) {
+        console.error("Map initialization failed:", error);
+        setMapStatus('error');
+      }
+    }, 200);
 
     return () => {
+      clearTimeout(timer);
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -174,11 +158,17 @@ const L = (window as any).L;
     <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4" onClick={onClose}>
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl" onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center p-4 border-b dark:border-gray-700">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">Route Simulation: {plan.rakeId}</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">
+            Route Simulation: {plan.rakeId}
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100"
+          >
             <X size={24} />
           </button>
         </div>
+
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -191,54 +181,66 @@ const L = (window as any).L;
                     <p className="font-medium text-gray-800 dark:text-gray-200">{source.baseName}</p>
                   </div>
                 </div>
+
                 <div className="flex items-start">
                   <MapPin size={20} className="text-red-600 mt-1 mr-3 flex-shrink-0" />
-                   <div>
+                  <div>
                     <p className="text-xs text-gray-500 dark:text-gray-400">Destination</p>
                     <p className="font-medium text-gray-800 dark:text-gray-200">{plan.destination}</p>
                   </div>
                 </div>
+
                 <div className="flex items-start">
                   <Truck size={20} className="text-blue-600 mt-1 mr-3 flex-shrink-0" />
-                   <div>
+                  <div>
                     <p className="text-xs text-gray-500 dark:text-gray-400">Estimated Distance</p>
-                    <p className="font-medium text-gray-800 dark:text-gray-200">{Math.round(distance).toLocaleString()} km</p>
+                    <p className="font-medium text-gray-800 dark:text-gray-200">
+                      {Math.round(distance).toLocaleString()} km
+                    </p>
                   </div>
                 </div>
+
                 <div className="flex items-start">
                   <Clock size={20} className="text-orange-600 mt-1 mr-3 flex-shrink-0" />
-                   <div>
+                  <div>
                     <p className="text-xs text-gray-500 dark:text-gray-400">Estimated Travel Time</p>
                     <p className="font-medium text-gray-800 dark:text-gray-200">~{estimatedTime} hours</p>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="relative bg-gray-200 dark:bg-gray-700 rounded-lg h-64 md:h-auto min-h-[250px] overflow-hidden">
-                <div ref={mapContainerRef} className="absolute inset-0 min-h-[300px] h-full"></div>
 
-                {mapStatus === 'loading' && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-gray-200/80 p-4 pointer-events-none">
-                        <p className="text-gray-500 dark:text-gray-300">Loading map...</p>
-                    </div>
-                )}
-                {mapStatus === 'error' && (
-                     <div className="absolute inset-0 flex items-center justify-center bg-red-100 p-4 pointer-events-none">
-                        <p className="text-red-600 text-center text-sm font-medium">Failed to load map</p>
-                    </div>
-                )}
-                {mapStatus === 'loaded' && (
-                    <div className="absolute bottom-2 left-2 right-2 bg-blue-100/80 backdrop-blur-sm border-l-4 border-blue-500 text-blue-800 p-2 text-center text-xs font-medium z-10" role="alert">
-                        Route visualization is a simulation. Actual rail routes may vary.
-                    </div>
-                )}
+            <div className="relative bg-gray-200 dark:bg-gray-700 rounded-lg h-64 md:h-auto min-h-[250px] overflow-hidden">
+              <div ref={mapContainerRef} className="absolute inset-0 min-h-[300px] h-full"></div>
+
+              {mapStatus === 'loading' && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-200/80 p-4 pointer-events-none">
+                  <p className="text-gray-500 dark:text-gray-300">Loading map...</p>
+                </div>
+              )}
+
+              {mapStatus === 'error' && (
+                <div className="absolute inset-0 flex items-center justify-center bg-red-100 p-4 pointer-events-none">
+                  <p className="text-red-600 text-center text-sm font-medium">Failed to load map</p>
+                </div>
+              )}
+
+              {mapStatus === 'loaded' && (
+                <div className="absolute bottom-2 left-2 right-2 bg-blue-100/80 backdrop-blur-sm border-l-4 border-blue-500 text-blue-800 p-2 text-center text-xs font-medium z-10" role="alert">
+                  Route visualization is a simulation. Actual rail routes may vary.
+                </div>
+              )}
             </div>
           </div>
         </div>
+
         <div className="p-4 bg-gray-50 dark:bg-gray-700 border-t dark:border-gray-600 text-right">
-             <button onClick={onClose} className="px-4 py-2 bg-sail-orange text-white rounded-md hover:bg-orange-700">
-                Close
-            </button>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-sail-orange text-white rounded-md hover:bg-orange-700"
+          >
+            Close
+          </button>
         </div>
       </div>
     </div>
