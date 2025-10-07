@@ -198,7 +198,8 @@ const RouteModal: FC<RouteModalProps> = ({ plan, source, onClose }) => {
               </div>
             </div>
             <div className="relative bg-gray-200 dark:bg-gray-700 rounded-lg h-64 md:h-auto min-h-[250px] overflow-hidden">
-                <div ref={mapContainerRef} className="absolute inset-0"></div>
+                <div ref={mapContainerRef} className="absolute inset-0 min-h-[300px] h-full"></div>
+
                 {mapStatus === 'loading' && (
                     <div className="absolute inset-0 flex items-center justify-center bg-gray-200/80 p-4 pointer-events-none">
                         <p className="text-gray-500 dark:text-gray-300">Loading map...</p>
