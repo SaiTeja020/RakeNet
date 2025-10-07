@@ -35,8 +35,18 @@ const RouteModal: FC<RouteModalProps> = ({ plan, source, onClose }) => {
 
   useEffect(() => {
     if (!mapContainerRef.current || !destCoords || mapInstanceRef.current) {
-      return;
-    }
+  return;
+}
+
+// ✅ Ensure Leaflet is actually loaded from the CDN
+if (typeof (window as any).L === 'undefined') {
+  console.error("Leaflet failed to load. Check if CDN script is being blocked.");
+  setMapStatus('error');
+  return;
+}
+
+const L = (window as any).L;
+
 
     try {
       if (typeof L === 'undefined') {
