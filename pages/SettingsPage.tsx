@@ -34,7 +34,7 @@ const SettingsPage: FC = () => {
         
         <div className="space-y-6">
             {/* Appearance Settings */}
-            <div className="flex items-start space-x-4">
+            {/* <div className="flex items-start space-x-4">
               {theme === 'light' ? <Sun className="h-6 w-6 text-yellow-500 mt-1" /> : <Moon className="h-6 w-6 text-indigo-400 mt-1" />}
               <div>
                 <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-200">Appearance</h3>
@@ -47,7 +47,7 @@ const SettingsPage: FC = () => {
                     <span className="text-gray-700 dark:text-gray-300 capitalize">{theme} Mode</span>
                 </div> */}
               </div>
-            </div>
+            </div> */}
           
             <div className="border-t border-gray-200 dark:border-gray-700"></div>
 
