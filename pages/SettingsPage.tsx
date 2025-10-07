@@ -108,30 +108,4 @@ const SettingsPage: FC = () => {
             <Shield className="h-6 w-6 text-green-600 mt-1" />
             <div>
               <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-200">Security</h3>
-              <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">Manage your account's security settings.</p>
-               <button onClick={handleChangePassword} className="mt-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
-                Change Password
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        <div className="mt-8 pt-5 border-t border-gray-200 dark:border-gray-700 flex justify-end">
-          <button onClick={handleSaveChanges} className="px-4 py-2 bg-sail-blue text-white rounded-md hover:bg-blue-800 transition-colors">
-            Save Changes
-          </button>
-        </div>
-      </div>
-
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3 text-sm z-50 transition-opacity duration-300">
-            <CheckCircle size={18} className="text-green-400" />
-            <span>{toastMessage}</span>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default SettingsPage;
+              <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">Manage your account's security settings.</
