@@ -39,13 +39,13 @@ const SettingsPage: FC = () => {
               <div>
                 <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-200">Appearance</h3>
                 <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">Switch between light and dark themes.</p>
-                <div className="mt-4 flex items-center gap-4">
+                {/* <div className="mt-4 flex items-center gap-4">
                     <button onClick={toggleTheme} className="relative inline-flex items-center h-6 rounded-full w-11 transition-colors bg-gray-200 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-sail-orange">
                         <span className="sr-only">Toggle theme</span>
                         <span className={`${theme === 'dark' ? 'translate-x-6' : 'translate-x-1'} inline-block w-4 h-4 transform bg-white rounded-full transition-transform`} />
                     </button>
                     <span className="text-gray-700 dark:text-gray-300 capitalize">{theme} Mode</span>
-                </div>
+                </div> */}
               </div>
             </div>
           
