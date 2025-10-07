@@ -1,5 +1,6 @@
 import { FC, useState } from 'react';
-import { User, Bell, Shield, Sun, Moon, CircleCheck as CheckCircle } from 'lucide-react';
+// import { User, Bell, Shield, Sun, Moon, CircleCheck as CheckCircle } from 'lucide-react';
+import { User, Bell, Shield, CircleCheck as CheckCircle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -33,21 +34,21 @@ const SettingsPage: FC = () => {
         <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-6">Application Settings</h2>
         
         <div className="space-y-6">
-            Appearance Settings 
-            {/* <div className="flex items-start space-x-4">
+            {/* Appearance Settings 
+             <div className="flex items-start space-x-4">
               {theme === 'light' ? <Sun className="h-6 w-6 text-yellow-500 mt-1" /> : <Moon className="h-6 w-6 text-indigo-400 mt-1" />}
               <div>
                 <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-200">Appearance</h3>
                 <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">Switch between light and dark themes.</p>
-                {/* <div className="mt-4 flex items-center gap-4">
+                <div className="mt-4 flex items-center gap-4">
                     <button onClick={toggleTheme} className="relative inline-flex items-center h-6 rounded-full w-11 transition-colors bg-gray-200 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-sail-orange">
                         <span className="sr-only">Toggle theme</span>
                         <span className={`${theme === 'dark' ? 'translate-x-6' : 'translate-x-1'} inline-block w-4 h-4 transform bg-white rounded-full transition-transform`} />
                     </button>
                     <span className="text-gray-700 dark:text-gray-300 capitalize">{theme} Mode</span>
-                </div> */}
+                </div>
               </div>
-            </div>
+            </div> */}
           
             {/* <div className="border-t border-gray-200 dark:border-gray-700"></div> */}
 
