@@ -1,4 +1,5 @@
 import './index.css'; //before react imports
+import 'leaflet/dist/leaflet.css';
 import { StrictMode } from 'react';
 // For React 18, `createRoot` is imported from `react-dom/client`.
 import { createRoot } from 'react-dom/client';
