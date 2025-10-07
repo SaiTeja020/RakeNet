@@ -4,7 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 
 const SettingsPage: FC = () => {
-  const { theme, toggleTheme } = useTheme();
+  // const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
   const [toastMessage, setToastMessage] = useState('');
 
@@ -33,7 +33,7 @@ const SettingsPage: FC = () => {
         <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-6">Application Settings</h2>
         
         <div className="space-y-6">
-            {/* Appearance Settings */}
+            Appearance Settings 
             {/* <div className="flex items-start space-x-4">
               {theme === 'light' ? <Sun className="h-6 w-6 text-yellow-500 mt-1" /> : <Moon className="h-6 w-6 text-indigo-400 mt-1" />}
               <div>
@@ -47,9 +47,9 @@ const SettingsPage: FC = () => {
                     <span className="text-gray-700 dark:text-gray-300 capitalize">{theme} Mode</span>
                 </div> */}
               </div>
-            </div> */}
+            </div>
           
-            <div className="border-t border-gray-200 dark:border-gray-700"></div>
+            {/* <div className="border-t border-gray-200 dark:border-gray-700"></div> */}
 
           {/* Profile Settings */}
           <div className="flex items-start space-x-4">
