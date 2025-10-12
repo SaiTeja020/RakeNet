@@ -104,14 +104,14 @@ const ReportsPage: FC = () => {
             r.base,
             r.destination,
             `${r.utilization}%`,
-            `$${r.cost.toLocaleString()}`,
+            `₹${r.cost.toLocaleString('en-IN')}`,
             `${r.slaCompliance}%`,
             r.status.charAt(0).toUpperCase() + r.status.slice(1)
           ]),
           summary: {
             'Total Rakes': filteredRakes.length,
             'Average Utilization': (filteredRakes.reduce((sum, r) => sum + r.utilization, 0) / (filteredRakes.length || 1)).toFixed(2) + '%',
-            'Total Cost': '$' + filteredRakes.reduce((sum, r) => sum + r.cost, 0).toLocaleString(),
+            'Total Cost': '₹' + filteredRakes.reduce((sum, r) => sum + r.cost, 0).toLocaleString(),
           }
         };
         break;
